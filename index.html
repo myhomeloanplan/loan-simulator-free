@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>住宅ローンシミュレーター（compact +/−・％表示・万円）</title>
+  <title>住宅ローンシミュレーター（無料版）</title>
 
   <!-- 外部ライブラリ -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- 無料版では Excel 出力を外すため XLSX は読み込まない -->
 
   <style>
 /* ---------- カラーテーマ変数 ---------- */
@@ -488,25 +488,13 @@ input[type="radio"] + label {
     <div id="repayment-table"></div>
 
     <!-- Excel出力 -->
-    <div class="actions">
-      <button class="btn btn-ghost" onclick="downloadExcel()">📥 シミュレーション結果をExcelで保存</button>
-    </div>
+    <!-- 無料版：Excel保存ボタンは非表示 -->
 
     <!-- 互換用 -->
     <div id="result" class="visually-hidden" aria-hidden="true"></div>
   </div>
 
-  <!-- ▼ 保存・比較 -->
-  <!-- 見出しを追加（①②と同じ panel-title スタイル） -->
-  <div class="panel-title panel-title-save"><span class="chip">3</span>結果を保存・比較</div>
-  <div class="savebar">
-    <input type="text" id="saveLabel" placeholder="シナリオ名（例：頭金500 / 35年）">
-    <button type="button" class="btn btn-compact" onclick="saveCurrentSummary()">結果を保存</button>
-    <button type="button" class="btn btn-ghost" onclick="exportSavedSummaries()">📥 比較結果をExcelで保存</button>
-  </div>
-  <div class="card saved-compare" id="savedCompare" style="display:none;">
-    <div class="saved-wrap" id="savedList"></div>
-  </div>
+  <!-- 無料版：保存・比較UIは削除 -->
 
 <script>
 
@@ -865,13 +853,7 @@ function drawCharts(data){
   });
 }
 
-/* ---------------- Excel出力 ---------------- */
-function downloadExcel(){
-  if(!lastSimData.length) return alert('まずシミュレーションを実行してください。');
-  const ws=XLSX.utils.json_to_sheet(lastSimData), wb=XLSX.utils.book_new(); 
-  XLSX.utils.book_append_sheet(wb,ws,'返済シミュレーション'); 
-  XLSX.writeFile(wb,'loan_simulation.xlsx');
-}
+/* 無料版：Excel出力機能は削除 */
 
 /* ---------------- 明細テーブルON/OFF ---------------- */
 document.addEventListener('change', e => {
@@ -883,80 +865,7 @@ document.addEventListener('change', e => {
   }
 });
 
-/* ====== 一時保存（比較）機能 ====== */
-let savedSummaries = [];
-function parseYenText(text){ return parseInt(String(text||'').replace(/[^\d]/g,''),10) || 0; }
-function saveCurrentSummary(){
-  const total = document.getElementById('total-repay')?.textContent || '';
-  const interest = document.getElementById('total-interest')?.textContent || '';
-  const first = document.getElementById('kpi-first')?.textContent || '';
-  const avg = document.getElementById('kpi-avg')?.textContent || '';
-  const max = document.getElementById('kpi-max')?.textContent || '';
-  if(!total || !interest || !first || !avg || !max){ alert('まず「シミュレーションする」を実行してください。'); return; }
-  const label = (document.getElementById('saveLabel')?.value || '').trim() || `シナリオ${savedSummaries.length+1}`;
-  const now = new Date();
-  const item = {
-    id: Date.now(),
-    label,
-    savedAt: now.toLocaleString(),
-    totalRepay: parseYenText(total),
-    totalInterest: parseYenText(interest),
-    first: parseYenText(first),
-    avg: parseYenText(avg),
-    max: parseYenText(max)
-  };
-  savedSummaries.push(item);
-  (document.getElementById('saveLabel')||{}).value = '';
-  renderSavedSummaries();
-}
-function renderSavedSummaries(){
-  const box = document.getElementById('savedCompare');
-  const list = document.getElementById('savedList');
-  if(!box || !list) return;
-  if(savedSummaries.length===0){ box.style.display='none'; list.innerHTML=''; return; }
-  box.style.display='block';
-  list.innerHTML = savedSummaries.map(s => `
-    <div class="saved-card">
-      <div class="saved-head">
-        <div>
-          <div class="saved-title">${escapeHtml(s.label)}</div>
-          <div class="saved-meta">${escapeHtml(s.savedAt)}</div>
-        </div>
-      </div>
-      <div class="saved-kpis">
-        <div class="row"><span>総返済額（諸費用含む）</span><strong>${s.totalRepay.toLocaleString()} 円</strong></div>
-        <div class="row"><span>総利息</span><strong>${s.totalInterest.toLocaleString()} 円</strong></div>
-        <div class="row"><span>初月</span><strong>${s.first.toLocaleString()} 円</strong></div>
-        <div class="row"><span>平均</span><strong>${s.avg.toLocaleString()} 円</strong></div>
-        <div class="row"><span>最大</span><strong>${s.max.toLocaleString()} 円</strong></div>
-      </div>
-      <div class="saved-actions">
-        <button class="btn btn-mini btn-ghost" onclick="renameSaved(${s.id})">名称変更</button>
-        <button class="btn btn-mini btn-danger" onclick="deleteSaved(${s.id})">削除</button>
-      </div>
-    </div>
-  `).join('');
-}
-function deleteSaved(id){ savedSummaries = savedSummaries.filter(s => s.id !== id); renderSavedSummaries(); }
-function renameSaved(id){
-  const target = savedSummaries.find(s => s.id === id);
-  if(!target) return;
-  const name = prompt('シナリオ名を入力してください：', target.label);
-  if(name!==null){ target.label = name.trim() || target.label; renderSavedSummaries(); }
-}
-function exportSavedSummaries(){
-  if(!savedSummaries.length){ alert('保存された結果がありません。'); return; }
-  if(typeof XLSX === 'undefined'){ alert('XLSXライブラリが読み込まれていません。'); return; }
-  const rows = savedSummaries.map(s => ({
-    シナリオ名: s.label, 保存日時: s.savedAt, 総返済額: s.totalRepay, 総利息: s.totalInterest,
-    初月: s.first, 平均: s.avg, 最大: s.max
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '比較結果');
-  XLSX.writeFile(wb, 'loan_sim_comparison.xlsx');
-}
-function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); }
+/* 無料版：保存・比較 機能は削除（関連ユーティリティも不要） */
 
 /* ========= 金利プリセット：生成ユーティリティ ========= */
 // 半年ごとの配列を入力欄＆グラフへ反映
