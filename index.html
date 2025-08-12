@@ -639,7 +639,7 @@ function applyRateUnified(){
 simulate();
 }
 
-/* ---------------- 金利グラフ（ドラッグ編集） ---------------- */
+/* ---------------- 金利グラフ（表示専用） ---------------- */
 function drawRateChart(){
   const inputs=[...document.querySelectorAll('.half-rate-input')];
   const rates=inputs.map(el=>parseFloat(el.value)||0);
@@ -678,17 +678,22 @@ function drawRateChart(){
         }
       },
       plugins:{
-          backgroundColor:'#0e2a47', titleColor:'#fff', bodyColor:'#fff',
-          callbacks:{ 
-            title:(items)=>{ const i=items[0].dataIndex; return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`;},
-            label:(ctx)=>`金利: ${Number(ctx.parsed.y).toFixed(2)}%` 
-          } 
-        },
-        
-      }
-    },
-    // 表示専用にするため、追加プラグインはなし
-  });
+  legend:{ display:false },
+  tooltip:{ 
+    backgroundColor:'#0e2a47', 
+    titleColor:'#fff', 
+    bodyColor:'#fff',
+    callbacks:{ 
+      title:(items)=>{
+        const i=items[0].dataIndex; 
+        return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`;
+      },
+      label:(ctx)=>`金利: ${Number(ctx.parsed.y).toFixed(2)}%`
+    }
+  }
+}
+}
+});
 }
 
 /* ---------------- 返済シミュレーション本体 ---------------- */
