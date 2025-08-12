@@ -8,7 +8,6 @@
   <!-- 外部ライブラリ -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-dragdata@2.0.0"></script>
   <!-- 無料版では Excel 出力を外すため XLSX は読み込まない -->
 
   <style>
@@ -435,10 +434,9 @@ input[type="radio"] + label {
     <!-- 半年ごとの手入力欄（動的生成） -->
     <div id="rate-inputs"></div>
 
-    <!-- ドラッグ編集（半年ごと） -->
-    <div class="section-title">📈 ドラッグで金利編集（半年ごと）</div>
-    <p class="note">点を上下にドラッグするだけで変更できます。変更したポイント以降は同じ金利となります。</p>
-    <div class="chart-wrap"><canvas id="rateChart"></canvas></div>
+<!-- 金利推移（表示専用） -->
+<div class="section-title">📈 金利推移（半年ごと）</div>
+<div class="chart-wrap"><canvas id="rateChart"></canvas></div>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="simulate()">シミュレーションする</button>
@@ -479,13 +477,6 @@ input[type="radio"] + label {
       <div class="chart-title">支払内訳（元金/利息）</div>
       <div class="chart-wrap"><canvas id="stackedChart"></canvas></div>
     </div>
-
-    <!-- 明細テーブル（ON/OFF） -->
-    <div class="row-end">
-      <label class="hint"><input type="checkbox" id="toggle-table"> 明細テーブルを表示</label>
-      <span class="hint">※オフにすると軽くなります</span>
-    </div>
-    <div id="repayment-table"></div>
 
     <!-- Excel出力 -->
     <!-- 無料版：Excel保存ボタンは非表示 -->
@@ -687,40 +678,16 @@ function drawRateChart(){
         }
       },
       plugins:{
-        legend:{display:false},
-        tooltip:{ 
           backgroundColor:'#0e2a47', titleColor:'#fff', bodyColor:'#fff',
           callbacks:{ 
             title:(items)=>{ const i=items[0].dataIndex; return `${Math.floor(i/2)+1}年目（${i%2===0?'前半':'後半'}）`;},
             label:(ctx)=>`金利: ${Number(ctx.parsed.y).toFixed(2)}%` 
           } 
         },
-        dragData:{
-          round:2, showTooltip:true, dragX:false, dragY:true,
-          onDrag:(e,di,idx,val)=>{ const snapped=Math.round(val/0.05)*0.05; return Math.max(0,Math.min(6,snapped)); },
-          onDragStart:(e)=>{ if(e&&e.native&&e.native.preventDefault) e.native.preventDefault(); document.body.style.touchAction='none'; },
-          onDragEnd:(e,di,index,value)=>{
-            document.body.style.touchAction='auto';
-            const old=rateChartInstance.data.datasets[0].data, newRates=[...old], len=newRates.length, PRE=0;
-            for(let i=index;i<len;i++) newRates[i]=value;
-            const start=Math.max(0,index-PRE), span=index-start;
-            if(span>0){ 
-              for(let i=start;i<index;i++){ 
-                const t=(i-start+1)/span; 
-                newRates[i]=old[i]*(1-t)+value*t; 
-              } 
-            }
-            updateInputsFromRateChart(newRates);
-            const dataMax = Math.max(...newRates, 0);
-            const yMax = Math.max(5, Math.ceil(dataMax / 0.5) * 0.5);
-            rateChartInstance.options.scales.y.max = yMax;
-            rateChartInstance.data.datasets[0].data=newRates;
-            rateChartInstance.update();
-          }
-        }
+        
       }
     },
-    plugins:[Chart.registry.getPlugin('dragdata')]
+    // 表示専用にするため、追加プラグインはなし
   });
 }
 
@@ -788,22 +755,6 @@ function displayResult(data,totalP,totalI,payments){
     legacy.textContent = `🏁 総返済額（諸費用含む）: ${totalRepay.toLocaleString()} 円\n📊 総利息: ${interestRounded.toLocaleString()} 円`;
   }
 
-  const show=document.getElementById('toggle-table').checked;
-  const wrap=document.getElementById('repayment-table');
-  wrap.innerHTML='';
-  if(show){
-    const table=document.createElement('table'), thead=table.createTHead(), tbody=table.createTBody();
-    thead.innerHTML='<tr><th>月</th><th>元金</th><th>利息</th><th>支払額</th><th>残高</th></tr>';
-    for(const row of data){
-      const tr=tbody.insertRow();
-      for(const k of ['月','元金','利息','支払額','残高']){
-        const td=tr.insertCell();
-        td.textContent=row[k].toLocaleString();
-        td.style.textAlign='right';
-      }
-    }
-    wrap.appendChild(table);
-  }
 }
 
 /* ---------------- グラフ描画（支払額/内訳） ---------------- */
@@ -854,16 +805,6 @@ function drawCharts(data){
 }
 
 /* 無料版：Excel出力機能は削除 */
-
-/* ---------------- 明細テーブルON/OFF ---------------- */
-document.addEventListener('change', e => {
-  if (e.target && e.target.id === 'toggle-table' && lastSimData.length) {
-    // 丸め済み明細から再集計せず、未丸めの合計を使って描画
-    const fallbackPays = lastSimData.map(r => r['支払額']);
-    const { totalP, totalI, payments } = lastTotals || { totalP: 0, totalI: 0, payments: fallbackPays };
-    displayResult(lastSimData, totalP, totalI, payments);
-  }
-});
 
 /* 無料版：保存・比較 機能は削除（関連ユーティリティも不要） */
 
