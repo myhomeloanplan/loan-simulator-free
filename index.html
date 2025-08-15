@@ -739,44 +739,60 @@ function simulate(){
   const result=[], payments=[]; 
   let totalP=0,totalI=0;
 
-  for(let m=0; m<months; m++){
-  // 元の行
-  // const r = (rates[Math.floor(m/6)]||0)/12;
-
-  // 修正版：月利を6桁（0.000000）に丸めてから使う
-  const annualRate = rates[Math.floor(m/6)] || 0; // 年利（例: 0.01）
-  const r = Math.round((annualRate / 12) * 1e6) / 1e6; // 6桁で丸めた月利
+for (let m = 0; m < months; m++) {
+  const annualRate = rates[Math.floor(m / 6)] || 0; // 年利（例: 0.01）
+  const r = annualRate / 12; // 月利（丸めない）
 
   const remain = months - m;
-  let interest = balance * r, principal, out;
 
-  if(repaymentType === 'principalAndInterestEqual'){
-    out = r > 0 
+  if (repaymentType === 'principalAndInterestEqual') {
+    // 元利均等の毎月返済額（小数保持）
+    const rawOut = r > 0
       ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
       : balance / remain;
-    interest = balance * r;
-    principal = out - interest;
+
+    // 利息は円未満切り捨て
+    const interest = Math.floor(balance * r);
+    const principal = rawOut - interest;
+
+    balance -= principal;
+    if (balance < 0) balance = 0;
+
+    totalP += principal;
+    totalI += interest;
+    payments.push(rawOut);
+
+    result.push({
+      月: m + 1,
+      元金: Math.round(principal),
+      利息: interest,
+      残高: Math.round(balance),
+      支払額: Math.round(rawOut)
+    });
+
   } else {
-    principal = amount / months;
-    interest = balance * r;
-    out = principal + interest;
+    // 元金均等返済
+    const principal = amount / months;
+    const interest = Math.floor(balance * r);
+    const out = principal + interest;
+
+    balance -= principal;
+    if (balance < 0) balance = 0;
+
+    totalP += principal;
+    totalI += interest;
+    payments.push(out);
+
+    result.push({
+      月: m + 1,
+      元金: Math.round(principal),
+      利息: interest,
+      残高: Math.round(balance),
+      支払額: Math.round(out)
+    });
   }
-
-  balance -= principal;
-  if(balance < 0) balance = 0;
-
-  totalP += principal;
-  totalI += interest;
-  payments.push(out);
-
-  result.push({
-    月: m + 1,
-    元金: Math.round(principal),
-    利息: Math.round(interest),
-    残高: Math.round(balance),
-    支払額: Math.round(out)
-  });
 }
+
 
   lastSimData=result; 
 lastTotals = { totalP, totalI, payments };
