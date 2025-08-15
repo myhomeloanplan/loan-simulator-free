@@ -727,89 +727,93 @@ function drawRateChart(){
 }
 
 /* ---------------- 返済シミュレーション本体 ---------------- */
-function simulate(){
-  const amount=parseAmount(document.getElementById('amount').value);
-  const years=+document.getElementById('years').value, months=years*12;
-  const repaymentType=document.querySelector("input[name='repaymentType']:checked").value;
-  const rates=[...document.querySelectorAll('.half-rate-input')].map(el=>parseFloat(el.value)/100);
-  if(!amount||!years) return alert('借入額と返済期間を入力してください。');
-  if(rates.length<Math.ceil(months/6)) return alert('金利の入力が不足しています。');
+function simulate() {
+  const amount = parseFloat(document.getElementById('loanAmount').value) * 10000;
+  const years = parseInt(document.getElementById('loanYears').value);
+  const months = years * 12;
+  const repaymentType = document.getElementById('repaymentType').value;
+  
+  const rateInputs = document.querySelectorAll('.rate-input');
+  const rates = Array.from(rateInputs).map(el => parseFloat(el.value) / 100);
 
-  let balance=amount; 
-  const result=[], payments=[]; 
-  let totalP=0,totalI=0;
+  let balance = amount;
+  let totalP = 0;
+  let totalI = 0;
+  let payments = [];
+  let result = [];
 
-for (let m = 0; m < months; m++) {
-  const annualRate = rates[Math.floor(m / 6)] || 0;
-  const r = annualRate / 12;
-  const remain = months - m;
+  for (let m = 0; m < months; m++) {
+    const annualRate = rates[Math.floor(m / 6)] || 0; // 年利（例: 0.01）
+    const r = annualRate / 12; // 月利（丸めない）
+    const remain = months - m;
 
-  if (repaymentType === 'principalAndInterestEqual') {
-    const rawOut = r > 0
-      ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
-      : balance / remain;
+    if (repaymentType === 'principalAndInterestEqual') {
+      // 元利均等の毎月返済額（小数保持）
+      let rawOut = r > 0
+        ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
+        : balance / remain;
 
-    const interest = Math.floor(balance * r);
-    const principal = rawOut - interest;
+      // 利息は円未満切り捨て
+      const interest = Math.floor(balance * r);
+      const principal = rawOut - interest;
 
-    balance -= principal;
-    if (balance < 0) balance = 0;
+      balance -= principal;
+      if (balance < 0) balance = 0;
 
-    // 最終月は総返済額が一致するように調整
-    if (m === months - 1) {
-      const totalTarget = payments[0] * months; // 初月額×回数
-      const diff = totalTarget - (payments.reduce((a,b)=>a+b,0) + rawOut);
-      rawOut += diff;
+      // 最終月は総返済額が揃うように調整
+      if (m === months - 1) {
+        const totalTarget = payments[0] * months;
+        const diff = totalTarget - (payments.reduce((a, b) => a + b, 0) + rawOut);
+        rawOut += diff;
+      }
+
+      totalP += principal;
+      totalI += interest;
+      payments.push(rawOut);
+
+      result.push({
+        月: m + 1,
+        元金: Math.round(principal),
+        利息: interest,
+        残高: Math.round(balance),
+        支払額: Math.round(rawOut)
+      });
+
+    } else {
+      // 元金均等返済
+      const principal = amount / months;
+      const interest = Math.floor(balance * r);
+      let out = principal + interest;
+
+      // 最終月調整
+      if (m === months - 1) {
+        const totalTarget = payments[0] * months;
+        const diff = totalTarget - (payments.reduce((a, b) => a + b, 0) + out);
+        out += diff;
+      }
+
+      balance -= principal;
+      if (balance < 0) balance = 0;
+
+      totalP += principal;
+      totalI += interest;
+      payments.push(out);
+
+      result.push({
+        月: m + 1,
+        元金: Math.round(principal),
+        利息: interest,
+        残高: Math.round(balance),
+        支払額: Math.round(out)
+      });
     }
-
-    totalP += principal;
-    totalI += interest;
-    payments.push(rawOut);
-
-    result.push({
-      月: m + 1,
-      元金: Math.round(principal),
-      利息: interest,
-      残高: Math.round(balance),
-      支払額: Math.round(rawOut)
-    });
-
-  } else {
-    const principal = amount / months;
-    const interest = Math.floor(balance * r);
-    let out = principal + interest;
-
-    if (m === months - 1) {
-      const totalTarget = payments[0] * months;
-      const diff = totalTarget - (payments.reduce((a,b)=>a+b,0) + out);
-      out += diff;
-    }
-
-    balance -= principal;
-    if (balance < 0) balance = 0;
-
-    totalP += principal;
-    totalI += interest;
-    payments.push(out);
-
-    result.push({
-      月: m + 1,
-      元金: Math.round(principal),
-      利息: interest,
-      残高: Math.round(balance),
-      支払額: Math.round(out)
-    });
   }
+
+  // 表示更新
+  displayResults(result, totalP, totalI, payments);
 }
 
-
-  lastSimData=result; 
-lastTotals = { totalP, totalI, payments };
-displayResult(result,totalP,totalI,payments); 
-  drawCharts(result);
-}
-
-/* ---------------- 結果表示（KPI/テーブル） ---------------- */
+  /* ---------------- 結果表示（KPI/テーブル） ---------------- */
 function displayResult(data,totalP,totalI,payments){
   const misc = parseAmount(document.getElementById('miscCost')?.value || '0');
   const totalRepay = Math.ceil(totalP + totalI + misc);
