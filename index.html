@@ -740,23 +740,27 @@ function simulate(){
   let totalP=0,totalI=0;
 
 for (let m = 0; m < months; m++) {
-  const annualRate = rates[Math.floor(m / 6)] || 0; // 年利（例: 0.01）
-  const r = annualRate / 12; // 月利（丸めない）
-
+  const annualRate = rates[Math.floor(m / 6)] || 0;
+  const r = annualRate / 12;
   const remain = months - m;
 
   if (repaymentType === 'principalAndInterestEqual') {
-    // 元利均等の毎月返済額（小数保持）
     const rawOut = r > 0
       ? balance * r * Math.pow(1 + r, remain) / (Math.pow(1 + r, remain) - 1)
       : balance / remain;
 
-    // 利息は円未満切り捨て
     const interest = Math.floor(balance * r);
     const principal = rawOut - interest;
 
     balance -= principal;
     if (balance < 0) balance = 0;
+
+    // 最終月は総返済額が一致するように調整
+    if (m === months - 1) {
+      const totalTarget = payments[0] * months; // 初月額×回数
+      const diff = totalTarget - (payments.reduce((a,b)=>a+b,0) + rawOut);
+      rawOut += diff;
+    }
 
     totalP += principal;
     totalI += interest;
@@ -771,10 +775,15 @@ for (let m = 0; m < months; m++) {
     });
 
   } else {
-    // 元金均等返済
     const principal = amount / months;
     const interest = Math.floor(balance * r);
-    const out = principal + interest;
+    let out = principal + interest;
+
+    if (m === months - 1) {
+      const totalTarget = payments[0] * months;
+      const diff = totalTarget - (payments.reduce((a,b)=>a+b,0) + out);
+      out += diff;
+    }
 
     balance -= principal;
     if (balance < 0) balance = 0;
