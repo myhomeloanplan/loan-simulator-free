@@ -3,27 +3,26 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="半年ごとに金利を変えて試せる、住宅ローンの無料シミュレーター。総支払額や月々の支払い、元利/元金均等に対応。">
-  <meta name="description" content="半年ごとに金利を変えて試せる住宅ローンの無料シミュレーター。総支払額・月々の支払い額・元利均等/元金均等にも対応し、簡単に比較できます。">
+  <meta name="description" content="半年ごとに金利を変えて試せる、住宅ローンのシミュレーター。総支払額や月々の支払い、元利/元金均等に対応。">
+  <meta name="description" content="半年ごとに金利を変えて試せる住宅ローンのシミュレーター。総支払額・月々の支払い額・元利均等/元金均等にも対応し、簡単に比較できます。">
 <link rel="canonical" href="https://loan-simulator-free.pages.dev/">
 
 <!-- OGP / Twitter -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="住宅ローンシミュレーター（無料）">
+<meta property="og:title" content="住宅ローンシミュレーター">
 <meta property="og:description" content="半年ごとの金利シナリオで総返済・月々をサクッと比較。">
 <meta property="og:url" content="https://myhomeloanplan.github.io/loan-simulator-free/">
 <meta property="og:url" content="https://loan-simulator-free.pages.dev/">
 <meta property="og:image" content="https://loan-simulator-free.pages.dev/ogp-image.png">
-<meta name="twitter:title" content="住宅ローンシミュレーター（無料）">
+<meta name="twitter:title" content="住宅ローンシミュレーター">
 <meta name="twitter:description" content="半年ごとの金利シナリオで総返済・月々をサクッと比較。元利均等・元金均等にも対応。">
 <meta name="twitter:image" content="https://loan-simulator-free.pages.dev/ogp-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<title>住宅ローンシミュレーター（無料版）</title>
+<title>住宅ローンシミュレーター</title>
 
 <!-- 外部ライブラリ -->
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- 無料版では Excel 出力を外すため XLSX は読み込まない -->
 
 <style>
 /* ---------- カラーテーマ変数 ---------- */
@@ -511,13 +510,10 @@ border-top-color: rgba(255,255,255,0.08);
 </div>
 
 <!-- Excel出力 -->
-<!-- 無料版：Excel保存ボタンは非表示 -->
 
 <!-- 互換用 -->
 <div id="result" class="visually-hidden" aria-hidden="true"></div>
 </div>
-
-<!-- 無料版：保存・比較UIは削除 -->
 
 <script>
 
@@ -807,10 +803,6 @@ data:{labels,datasets:[
 options:{...common, scales:{...common.scales, x:{...common.scales.x,stacked:true}, y:{...common.scales.y,stacked:true}}} 
 });
 }
-
-/* 無料版：Excel出力機能は削除 */
-
-/* 無料版：保存・比較 機能は削除（関連ユーティリティも不要） */
 
 /* ========= 金利プリセット：生成ユーティリティ ========= */
 // 半年ごとの配列を入力欄＆グラフへ反映
