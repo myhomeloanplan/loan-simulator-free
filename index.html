@@ -393,6 +393,18 @@ background: #1c1c1c;
 border-top-color: rgba(255,255,255,0.08);
 }
 }
+/* ---------- 免責文 ---------- */
+.disclaimer{
+  color: var(--muted);        /* 薄めグレー（既存のテーマ色） */
+  font-size: .9rem;           /* 本文より少し小さめ */
+  line-height: 1.6;
+  margin: 6px auto 0;         /* タイトル下に少し余白 */
+  max-width: 60ch;            /* 長すぎる行を抑えて読みやすく */
+  text-align: center;         /* タイトルに合わせて中央揃え */
+}
+@media (max-width:640px){
+  .disclaimer{ font-size: .85rem; }
+}
 </style>
 </head>
 
@@ -400,6 +412,10 @@ border-top-color: rgba(255,255,255,0.08);
 <div class="title-wrap">
 <div class="subtitle">半年ごとに金利を変更できる</div>
 <h1 class="title">住宅ローンシミュレーター</h1>
+  <!-- ▼ 追記：免責文 -->
+  <p class="disclaimer" role="note">
+    本シミュレーターは概算の試算を目的としたものであり、実際の融資条件・金利・返済額を保証するものではありません。ご利用は自己責任にてお願いいたします。詳細は各金融機関に直接ご確認ください。
+  </p>
 </div>
 
 <!-- =============== 条件入力カード =============== -->
