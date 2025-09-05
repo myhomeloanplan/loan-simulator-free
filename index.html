@@ -394,16 +394,20 @@ border-top-color: rgba(255,255,255,0.08);
 }
 }
 /* ---------- 免責文 ---------- */
-.disclaimer{
-  color: var(--muted);        /* 薄めグレー（既存のテーマ色） */
-  font-size: .9rem;           /* 本文より少し小さめ */
-  line-height: 1.6;
-  margin: 6px auto 0;         /* タイトル下に少し余白 */
-  max-width: 60ch;            /* 長すぎる行を抑えて読みやすく */
-  text-align: center;         /* タイトルに合わせて中央揃え */
+.disclaimer {
+  color: var(--muted);
+  font-size: .95rem;      /* PCでは少し余裕 */
+  line-height: 1.7;
+  margin: 10px auto 0;
+  text-align: center;
+  /* max-width は外しておく */
 }
-@media (max-width:640px){
-  .disclaimer{ font-size: .85rem; }
+
+@media (max-width: 640px){
+  .disclaimer {
+    font-size: .85rem;    /* スマホは文字小さめ */
+    max-width: 60ch;      /* スマホは行長を制限して読みやすく */
+  }
 }
 </style>
 </head>
